@@ -1,9 +1,9 @@
-process.env.AWS_SDK_LOAD_CONFIG = 'true'
-process.env.AWS_PROFILE = 'prod'
-
 import AWS from 'aws-sdk'
 import proxy from 'proxy-agent'
 import moment from 'moment'
+
+process.env.AWS_SDK_LOAD_CONFIG = 'true'
+process.env.AWS_PROFILE = 'prod'
 
 interface ObjectVersion {
   Key: string
@@ -25,14 +25,15 @@ const prefix = 'input/'
 
 const s3Client = new AWS.S3()
 getVersions(bucket, prefix)
-  .then(versions => {
+  .then(async versions => {
     console.log('File,Version,Date,DayOfWeek,Time,Count')
     const countPromises = versions
       .filter(version => moment(version.LastModified).isAfter(cutoff))
-      .map(version => processVersion(version)
+      .map(async version => processVersion(version)
         .catch(err => {
           const modifiedDate = moment(version.LastModified)
-          console.log(`${version.Key},${version.VersionId},${modifiedDate.format('YYYY-MM-DD')},${modifiedDate.format('dddd')},${modifiedDate.format('HH:mm:ss')},${err.message || err}`)
+          console.log(`${version.Key},${version.VersionId},${modifiedDate.format('YYYY-MM-DD')},
+            ${modifiedDate.format('dddd')},${modifiedDate.format('HH:mm:ss')},${err.message || err}`)
           return 0
         }))
 
@@ -77,7 +78,8 @@ async function processVersion (object: AWS.S3.Types.ObjectVersion): Promise<numb
       // Take away one row for the CSV header
       const count = (response.Body ?? '').toString().trim().split(/\r?\n/g).length - 1
       const modifiedDate = moment(object.LastModified)
-      console.log(`${object.Key},${object.VersionId},${modifiedDate.format('YYYY-MM-DD')},${modifiedDate.format('dddd')},${modifiedDate.format('HH:mm:ss')},${count}`)
+      console.log(`${object.Key},${object.VersionId},${modifiedDate.format('YYYY-MM-DD')},
+        ${modifiedDate.format('dddd')},${modifiedDate.format('HH:mm:ss')},${count}`)
       return count
     })
 }
