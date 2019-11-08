@@ -1,6 +1,7 @@
-import AWS from 'aws-sdk'
+import AWS, { AWSError } from 'aws-sdk'
 import proxy from 'proxy-agent'
 import moment from 'moment'
+import { ListObjectVersionsOutput } from 'aws-sdk/clients/s3'
 
 process.env.AWS_SDK_LOAD_CONFIG = 'true'
 process.env.AWS_PROFILE = 'prod'
@@ -46,6 +47,14 @@ getVersions(bucket, prefix)
 async function getVersions (bucket: string, prefix: string): Promise<AWS.S3.Types.ObjectVersion[]> {
   return new Promise((resolve, reject) => {
     let result: AWS.S3.Types.ObjectVersion[] = []
+
+    const response = s3Client.listObjectVersions({})
+    response.promise()
+    response.send((err : AWSError, data: ListObjectVersionsOutput) => {
+      
+    })
+    
+
     s3Client.listObjectVersions({
       Bucket: bucket,
       Prefix: prefix
